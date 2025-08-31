@@ -6,14 +6,14 @@
   "showInterval": 300000,
   "sponsors": [
     {
-      "id": "vgxteam",
-      "name": "RaolByte",
+      "id": "resa",
+      "name": "resaa",
       "logo": "",
       "backgroundColor": "#1a1a1a",
       "textColor": "#ffffff",
       "bannerImage": "https://raw.githubusercontent.com/raolbyte/Raol-UI/main/src/banner.jpg",
       "url": "https://whatsapp.com/channel/0029Vb6n9HIDJ6H6oibRvv1D",
-      "active": true
+      "active": false
     }
   ]
 }
