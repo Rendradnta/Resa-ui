@@ -1,0 +1,68 @@
+{
+  "name": "Raol Api'S",
+  "version": "v2.0.0",
+  "description": "Experience the next generation of API documentation with real-time monitoring, interactive testing, and comprehensive system insights.",
+  "maintenance": {
+    "enabled": false,
+    "gifUrl": "https://raw.githubusercontent.com/raolbyte/xyz/refs/heads/main/public/maintenance.gif"
+  },
+  "bannerImage": "/src/banner.jpg",
+  "previewImage": "/src/preview.png",
+  "header": {
+    "status": "Online"
+  },
+  "apiSettings": {
+    "creator": "VGX Team",
+    "apikey": ["vgx-team"]
+  },
+  "categories": [
+    {
+      "name": "Artificial Intelligence",
+      "items": [
+        {
+          "name": "LuminAI",
+          "desc": "Advanced AI assistant powered by LuminAI for intelligent conversations",
+          "path": "/ai/luminai?text=",
+          "status": "error",
+          "params": {
+            "text": "Text message for the AI to respond to"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Random Images",
+      "items": [
+        {
+          "name": "Blue Archive",
+          "desc": "Get random high-quality Blue Archive character images",
+          "path": "/random/ba",
+          "status": "ready"
+        }
+      ]
+    },
+    {
+      "name": "Image Makers",
+      "items": [
+        {
+          "name": "BRAT Generator",
+          "desc": "Generate BRAT-style text images with customizable colors and backgrounds",
+          "path": "/maker/brat?text=Hello World",
+          "status": "ready",
+          "params": {
+            "text": "Text to be inserted into the BRAT image (required)"
+          }
+        },
+        {
+          "name": "BRAT Video Generator",
+          "desc": "Generate animated BRAT-style text videos with customizable colors and backgrounds",
+          "path": "/maker/bratvid?text=Hello World",
+          "status": "ready",
+          "params": {
+            "text": "Text to be inserted into the BRAT video (required)"
+          }
+        }
+      ]
+    }
+  ]
+}
