@@ -1,5 +1,5 @@
 {
-  "name": "Raol Api'S",
+  "name": "Resa Api'S",
   "version": "v2.0.0",
   "description": "Experience the next generation of API documentation with real-time monitoring, interactive testing, and comprehensive system insights.",
   "maintenance": {
@@ -12,8 +12,8 @@
     "status": "Online"
   },
   "apiSettings": {
-    "creator": "VGX Team",
-    "apikey": ["vgx-team"]
+    "creator": "Renzy",
+    "apikey": ["resa"]
   },
   "categories": [
     {
