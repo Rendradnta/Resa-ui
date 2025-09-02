@@ -12,8 +12,8 @@
     "status": "Online"
   },
   "apiSettings": {
-    "creator": "Renzy",
-    "apikey": ["resa"]
+    "creator": "VGX Team",
+    "apikey": ["vgx-team"]
   },
   "categories": [
     {
@@ -60,6 +60,57 @@
           "status": "ready",
           "params": {
             "text": "Text to be inserted into the BRAT video (required)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Manga",
+      "items": [
+        {
+          "name": "Search Manga",
+          "desc": "Search manga by keyword",
+          "path": "/api/manga/search?q=",
+          "status": "ready",
+          "params": {
+            "q": "Keyword to search (required)"
+          }
+        },
+        {
+          "name": "Detail Manga",
+          "desc": "Get manga detail including sinopsis, info, and chapters",
+          "path": "/api/manga/detail?url=",
+          "status": "ready",
+          "params": {
+            "url": "Full URL to the manga page (required)"
+          }
+        },
+        {
+          "name": "Read Chapter",
+          "desc": "Get all images and info of a specific manga chapter",
+          "path": "/api/manga/chapter?url=",
+          "status": "ready",
+          "params": {
+            "url": "Full URL to the manga chapter (required)"
+          }
+        },
+        {
+          "name": "Popular Manga",
+          "desc": "Get a list of trending manga",
+          "path": "/api/manga/populer?page=1",
+          "status": "ready",
+          "params": {
+            "page": "Page number (default 1, optional)"
+          }
+        },
+        {
+          "name": "Genre Manga",
+          "desc": "Get manga by genre",
+          "path": "/api/manga/genre?name=action&page=1",
+          "status": "ready",
+          "params": {
+            "name": "Genre name (e.g. action, romance, isekai, etc.)",
+            "page": "Page number (default 1, optional)"
           }
         }
       ]
