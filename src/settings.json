@@ -12,8 +12,8 @@
     "status": "Online"
   },
   "apiSettings": {
-    "creator": "Renzz",
-    "apikey": ["chelsa"]
+    "creator": "renzy",
+    "apikey": ["resa"]
   },
   "categories": [
     {
@@ -26,6 +26,21 @@
           "status": "error",
           "params": {
             "text": "Text message for the AI to respond to"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Game Stalk",
+      "items": [
+        {
+          "name": "Mobile Legends Stalk",
+          "desc": "Check Mobile Legends account info (username, region, first recharge / double diamond status)",
+          "path": "/api/stalk/ml?uid=123456&zone=1234",
+          "status": "ready",
+          "params": {
+            "uid": "Mobile Legends user ID (required)",
+            "zone": "Mobile Legends server zone ID (required)"
           }
         }
       ]
