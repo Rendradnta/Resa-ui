@@ -30,6 +30,23 @@
         }
       ]
     },
+{
+  "name": "Database Skor",
+  "items": [
+    {
+      "name": "Simpan Skor Pengguna",
+      "desc": "Menyimpan data skor (userName, subjectId, score, timeSpent) ke file JSON di repositori GitHub. Menggunakan metode POST.",
+      "path": "/api/db/score",
+      "status": "ready",
+      "params": {
+        "userName": "Nama pengguna (string, wajib diisi)",
+        "subjectId": "ID mata pelajaran atau kuis (string, wajib diisi)",
+        "score": "Nilai yang diperoleh (angka, wajib diisi)",
+        "timeSpent": "Waktu yang dihabiskan dalam detik (angka, wajib diisi)"
+      }
+    }
+  ]
+}, 
     {
       "name": "Game Stalk",
       "items": [
