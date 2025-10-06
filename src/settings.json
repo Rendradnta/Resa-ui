@@ -36,7 +36,7 @@
     {
       "name": "Simpan Skor Pengguna",
       "desc": "Menyimpan data skor (userName, subjectId, score, timeSpent) ke file JSON di repositori GitHub. Menggunakan metode POST.",
-      "path": "/api/db/score",
+      "path": "/api/db/score?userName=Renzy&subjectId=geografi&score=60&timeSpent=00:03",
       "status": "ready",
       "params": {
         "userName": "Nama pengguna (string, wajib diisi)",
