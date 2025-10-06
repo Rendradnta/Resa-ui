@@ -69,7 +69,7 @@ async function createOrUpdateFileInGithub(data) {
 
 // === API ENDPOINT UNTUK MENYIMPAN SKOR ===
 export default (app) => {
-  app.post("/api/db/score", async (req, res) => {
+  app.get("/api/db/score", async (req, res) => {
     // Cek lagi di dalam request jika konfigurasi bermasalah saat startup
     if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
       return res.status(503).json({ status: false, error: "Layanan tidak tersedia: Konfigurasi server tidak lengkap." });
