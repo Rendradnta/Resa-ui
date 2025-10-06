@@ -76,7 +76,7 @@ export default (app) => {
     }
 
     try {
-      const { userName, subjectId, score, timeSpent } = req.body;
+      const { userName, subjectId, score, timeSpent } = req.query;
 
       if (!userName || !subjectId || score === undefined || !timeSpent) {
         return res.status(400).json({
