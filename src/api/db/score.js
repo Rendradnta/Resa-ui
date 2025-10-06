@@ -5,19 +5,14 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // === KONFIGURASI GITHUB DARI .ENV ===
-// Bagian ini akan dieksekusi sekali saat plugin dimuat.
 const tokenPart1 = process.env.GITHUB_TOKEN_PART_1;
 const tokenPart2 = process.env.GITHUB_TOKEN_PART_2;
 const tokenPart3 = process.env.GITHUB_TOKEN_PART_3;
-
-// Satukan kembali menjadi satu string token yang utuh
 const GITHUB_TOKEN = `${tokenPart1 || ''}${tokenPart2 || ''}${tokenPart3 || ''}`;
-
 const GITHUB_OWNER = process.env.GITHUB_OWNER;
 const GITHUB_REPO = process.env.GITHUB_REPO;
 const FILE_PATH = "database/scores.json";
 
-// Lakukan pengecekan saat startup untuk memastikan konfigurasi ada
 if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
   console.error(
     "❌ FATAL ERROR: Konfigurasi GitHub (Token, Owner, Repo) tidak lengkap di file .env. Endpoint skor tidak akan berfungsi."
@@ -29,6 +24,23 @@ const GITHUB_HEADERS = {
   Authorization: `token ${GITHUB_TOKEN}`,
   Accept: "application/vnd.github.v3+json",
 };
+
+// === FUNGSI HELPER UNTUK KONVERSI WAKTU ===
+/**
+ * Mengubah string waktu format "mm:ss" menjadi total detik.
+ * @param {string} timeString - Waktu dalam format "mm:ss".
+ * @returns {number} Total waktu dalam detik.
+ */
+function convertTimeToSeconds(timeString) {
+  if (!timeString || typeof timeString !== 'string' || !timeString.includes(':')) {
+    console.warn(`Format waktu tidak valid diterima: ${timeString}. Menggunakan nilai 0.`);
+    return 0;
+  }
+  const parts = timeString.split(':');
+  const minutes = parseInt(parts[0], 10) || 0;
+  const seconds = parseInt(parts[1], 10) || 0;
+  return (minutes * 60) + seconds;
+}
 
 
 // === FUNGSI HELPER UNTUK MENYIMPAN DATA KE GITHUB ===
@@ -45,6 +57,7 @@ async function createOrUpdateFileInGithub(data) {
     if (error.response && error.response.status !== 404) {
       throw new Error(`Gagal mengambil file dari GitHub: ${error.message}`);
     }
+    // Jika file tidak ada (404), kita lanjutkan dengan array kosong
   }
 
   existingData.push(data);
@@ -66,11 +79,9 @@ async function createOrUpdateFileInGithub(data) {
   }
 }
 
-
-// === API ENDPOINT UNTUK MENYIMPAN SKOR ===
+// === API ENDPOINT (MENGGUNAKAN METODE GET) ===
 export default (app) => {
   app.get("/api/db/score", async (req, res) => {
-    // Cek lagi di dalam request jika konfigurasi bermasalah saat startup
     if (!GITHUB_TOKEN || !GITHUB_OWNER || !GITHUB_REPO) {
       return res.status(503).json({ status: false, error: "Layanan tidak tersedia: Konfigurasi server tidak lengkap." });
     }
@@ -81,16 +92,20 @@ export default (app) => {
       if (!userName || !subjectId || score === undefined || !timeSpent) {
         return res.status(400).json({
           status: false,
-          error: "Parameter tidak lengkap. 'userName', 'subjectId', 'score', dan 'timeSpent' diperlukan.",
+          error: "Parameter tidak lengkap. 'userName', 'subjectId', 'score', dan 'timeSpent' diperlukan sebagai query parameter.",
         });
       }
+
+      // Konversi input string menjadi angka sebelum disimpan
+      const scoreAsNumber = Number(score);
+      const timeAsSeconds = convertTimeToSeconds(timeSpent);
 
       const newData = {
         id: Date.now(),
         userName,
         subjectId,
-        score,
-        timeSpent,
+        score: scoreAsNumber,      // Disimpan sebagai angka
+        timeSpent: timeAsSeconds,  // Disimpan sebagai total detik (angka)
         createdAt: new Date().toISOString(),
       };
 
@@ -109,3 +124,4 @@ export default (app) => {
     }
   });
 };
+
