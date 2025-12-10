@@ -1,7 +1,7 @@
 import axios from "axios"
 
 // ==========================================
-// 1. MOBAPAY (Cek Double Diamond / First Recharge)
+// 1. MOBAPAY (SUMBER UTAMA: Username & Bonus)
 // ==========================================
 async function mobapay(uid, zone) {
   try {
@@ -15,59 +15,56 @@ async function mobapay(uid, zone) {
         language: "en",
         shop_id: 1001,
       },
+      timeout: 5000 // Timeout biar ga loading lama
     })
 
-    // Cek error dari API Mobapay sendiri
-    if (data.return_code !== 0) return null;
+    // Validasi return code dari Mobapay (0 = Success)
+    if (data.return_code !== 0) {
+        console.log(`Mobapay failed for ${uid}|${zone}: ${data.return_msg}`);
+        return null;
+    }
 
-    // Ambil info first recharge (double diamond)
-    const first_recharge = data.data.shop_info.good_list
-      .filter((item) => item.label && item.label.caption === "首充商品角标")
-      .map((item) => ({
-        title: item.title,
-        available: !item.goods_limit.reached_limit,
-      }))
+    // Ambil Username
+    const username = data.data.user_info.user_name;
+    if (!username) return null;
 
-    // Cek lokasi shelf lain untuk info recharge
-    const shelf = data.data.shop_info.shelf_location || [];
-    const first_recharge2 = shelf.length > 0 ? shelf[0].goods
-      .filter((item) => item.label && item.label.caption === "首充商品角标")
-      .map((item) => ({
-        title: item.title,
-        available: !item.goods_limit.reached_limit,
-      })) : [];
+    // Ambil First Recharge Info (Optional)
+    let first_recharge = [];
+    if (data.data.shop_info && data.data.shop_info.good_list) {
+        first_recharge = data.data.shop_info.good_list
+          .filter((item) => item.label && item.label.caption === "首充商品角标")
+          .map((item) => ({
+            title: item.title,
+            available: !item.goods_limit.reached_limit,
+          }));
+    }
 
     return {
-      username: data.data.user_info.user_name,
-      first_recharge: [...first_recharge, ...first_recharge2],
+      username: username,
+      first_recharge: first_recharge,
     }
   } catch (error) {
-    // Silent fail agar tidak memutus flow utama
+    console.error("❌ Mobapay Error:", error.message)
     return null
   }
 }
 
 // ==========================================
-// 2. GEMPAY (Cek Region via Scraping)
+// 2. GEMPAY (SUMBER SEKUNDER: Region Only)
 // ==========================================
-async function getToken(url) {
-  const response = await axios.get(url)
-  const cookies = response.headers["set-cookie"]
-  const joinedCookies = cookies ? cookies.join("; ") : null
-
-  const csrfTokenMatch = response.data.match(/<meta name="csrf-token" content="(.*?)">/)
-  const csrfToken = csrfTokenMatch ? csrfTokenMatch[1] : null
-
-  if (!csrfToken || !joinedCookies) {
-    throw new Error("Gagal mendapatkan CSRF token atau cookie.")
-  }
-  return { csrfToken, joinedCookies }
-}
-
-async function mlStalk(uid, zone) {
+async function getRegion(uid, zone) {
   try {
-    const { csrfToken, joinedCookies } = await getToken("https://www.gempaytopup.com")
+    // 1. Get CSRF & Cookie
+    const pageRes = await axios.get("https://www.gempaytopup.com", { timeout: 4000 });
+    const cookies = pageRes.headers["set-cookie"];
+    const joinedCookies = cookies ? cookies.join("; ") : "";
+    
+    const csrfTokenMatch = pageRes.data.match(/<meta name="csrf-token" content="(.*?)">/);
+    const csrfToken = csrfTokenMatch ? csrfTokenMatch[1] : null;
 
+    if (!csrfToken || !joinedCookies) return null;
+
+    // 2. Post Data
     const { data } = await axios.post(
       "https://www.gempaytopup.com/stalk-ml",
       { uid, zone },
@@ -76,94 +73,48 @@ async function mlStalk(uid, zone) {
           "X-CSRF-Token": csrfToken,
           "Content-Type": "application/json",
           Cookie: joinedCookies,
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         },
+        timeout: 5000
       }
-    )
-    return data // Biasanya return { username, region, ... }
+    );
+    
+    // Gempay return { status: true, username: "...", region: "ID" }
+    return data && data.region ? data.region : null;
   } catch (error) {
-    return null
+    // Jangan log error heboh, karena ini cuma pelengkap region
+    return null;
   }
 }
 
 // ==========================================
-// 3. VOCAGAME FALLBACK (Backup jika User/Region null)
-// ==========================================
-async function vocagameFallback(user_id, zone_id) {
-    try {
-        const payload = {
-            shop_code: 'MOBILE_LEGENDS',
-            data: {
-                user_id: user_id.toString(),
-                zone_id: zone_id.toString()
-            }
-        };
-
-        const { data } = await axios.post('https://api.nekolabs.web.id/px?url=https://api-gw-prd.vocagame.com/gateway-ms/order/v1/client/transactions/verify', payload, {
-            headers: {
-                origin: 'https://vocagame.com',
-                referer: 'https://vocagame.com/',
-                'user-agent': 'Mozilla/5.0 (Linux; Android 15; SM-F958 Build/AP3A.240905.015) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.6723.86 Mobile Safari/537.36',
-                'x-api-key': '4QG09jBHxuS4', // Key publik vocagame (bisa berubah sewaktu-waktu)
-                'x-client': 'web-mobile',
-                'x-country': 'ID',
-                'x-locale': 'id-id',
-                'x-timestamp': Date.now()
-            }
-        });
-
-        // Struktur response nekolabs/proxy mungkin berbeda, sesuaikan parsing di sini
-        // Biasanya: data.data jika langsung JSON, atau data.result.content jika dibungkus
-        const resultData = data.data || (data.result && data.result.content);
-        
-        if (resultData && resultData.username) {
-            return {
-                username: resultData.username,
-                region: resultData.country_of_origin ? resultData.country_of_origin.toUpperCase() : 'UNKNOWN'
-            };
-        }
-        return null;
-
-    } catch (error) {
-        console.error("❌ Vocagame Error:", error.message);
-        return null;
-    }
-}
-
-// ==========================================
-// LOGIKA UTAMA (GABUNGAN SEMUA)
+// LOGIKA GABUNGAN (MAIN HANDLER)
 // ==========================================
 async function checkMLUser(uid, zone) {
-  // 1. Jalankan Mobapay dan Gempay secara paralel
-  const [mobapayData, gempayData] = await Promise.all([
-    mobapay(uid, zone),
-    mlStalk(uid, zone),
-  ])
+  // 1. Jalankan Mobapay duluan karena ini KUNCI
+  const mobaData = await mobapay(uid, zone);
 
-  // 2. Siapkan wadah data sementara
-  let finalUsername = mobapayData?.username || gempayData?.username || null;
-  let finalRegion = gempayData?.region || null; // Mobapay jarang kasih region spesifik (hanya server ID)
-  let firstRecharge = mobapayData?.first_recharge || [];
+  // Jika Mobapay gagal/user tidak ketemu, langsung stop.
+  if (!mobaData) return null;
 
-  // 3. LOGIKA FALLBACK: Jika username atau region masih kosong, pakai Vocagame
-  if (!finalUsername || !finalRegion) {
-      console.log(`⚠️ Data belum lengkap (User: ${finalUsername}, Region: ${finalRegion}). Mencoba fallback Vocagame...`);
-      const vocaData = await vocagameFallback(uid, zone);
-      
-      if (vocaData) {
-          if (!finalUsername) finalUsername = vocaData.username;
-          if (!finalRegion) finalRegion = vocaData.region;
-      }
-  }
-
-  // 4. Jika masih tidak ditemukan sama sekali
-  if (!finalUsername) return null;
+  // 2. Jika user ketemu di Mobapay, baru kita cari Region (Async biar cepat)
+  // Kita tidak perlu menunggu region gagal untuk me-return data.
+  const regionPromise = getRegion(uid, zone);
+  
+  // Tunggu region max 3 detik, kalau kelamaan skip aja biar response cepat
+  // Teknik: Promise.race antara fetch region vs timeout
+  const regionData = await Promise.race([
+      regionPromise,
+      new Promise(resolve => setTimeout(() => resolve(null), 3500))
+  ]);
 
   return {
     uid,
     zone,
-    username: finalUsername,
-    region: finalRegion || "Tidak Ditemukan", // Default ke ID jika region tetap null tapi username ketemu
-    first_recharge: firstRecharge,
+    username: mobaData.username, // Pasti ada karena check di atas
+    region: regionData || "ID (Default)", // Kalau Gempay gagal, default ID
+    first_recharge: mobaData.first_recharge,
+    source: "Mobapay Direct"
   }
 }
 
@@ -175,19 +126,31 @@ export default (app) => {
     try {
       const { uid, zone } = req.query
       if (!uid || !zone) {
-        return res.status(400).json({ status: false, error: "uid and zone are required" })
+        return res.status(400).json({ 
+            status: false, 
+            creator: "renzy", 
+            error: "uid and zone are required" 
+        })
       }
 
       const result = await checkMLUser(uid, zone)
       
       if (!result) {
-        return res.status(404).json({ status: false, error: "User not found or all services unavailable" })
+        return res.status(404).json({ 
+            status: false, 
+            creator: "renzy", 
+            error: "User not found (Check UID/Zone)" 
+        })
       }
 
-      res.status(200).json({ status: true, result })
+      res.status(200).json({ 
+          status: true, 
+          creator: "renzy", 
+          result 
+      })
     } catch (error) {
       console.error(error);
       res.status(500).json({ status: false, error: error.message })
     }
   })
-          }
+        }
