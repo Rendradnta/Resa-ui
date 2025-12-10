@@ -15,7 +15,6 @@ async function mobapay(uid, zone) {
         language: "en",
         shop_id: 1001,
       },
-      timeout: 5000 // Timeout 5 detik
     })
 
     if (data.return_code !== 0) return null
